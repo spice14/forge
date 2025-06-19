@@ -22,3 +22,13 @@ def clone_repo(repo_url: str, target_dir: str) -> str:
     git.Repo.clone_from(repo_url, repo_path)
     return repo_path
 
+from pathlib import Path
+
+def extract_code_segment(file_path: Path, start_line: int, end_line: int) -> str:
+    """
+    Extract lines from a Python file between start_line and end_line (inclusive).
+    Lines are 1-indexed to match AST lineno behavior.
+    """
+    lines = Path(file_path).read_text(encoding="utf-8").splitlines()
+    segment = lines[start_line - 1 : end_line]
+    return "\n".join(segment)

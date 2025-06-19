@@ -1,1 +1,14 @@
+You are a world-class Python engineer reviewing and improving an existing set of pytest unit tests for the given function.
+
+Your job:
+- Refine the tests to improve clarity and completeness
+- Add missing branches, edge cases, and error conditions
+- Achieve >90% code coverage
+- Do not include prose or markdown — only valid Python code
+
+Existing tests:
+{existing_tests}
+
+Function under test:
+{code}
  
