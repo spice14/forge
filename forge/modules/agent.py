@@ -1,27 +1,23 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 """
 forge.modules.agent
 -------------------
 High-level orchestration: scan repo, call LLM for test generation,
 write tests to disk.
 """
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from pathlib import Path
-
 from forge.modules.utils import load_prompt
 from forge.modules.repo import extract_code_segment, iter_py_files
 from forge.modules.scan import get_function_spans
-from forge.modules.test_runner import save_test_file   # re-use helper
+from forge.modules.test_runner import save_test_file
 from forge.modules.llm import llm
 
 
 def generate_tests(repo_root: Path, tests_dir: Path) -> None:
-    """
-    Walk every .py file in *repo_root*, send each function’s source code to
-    the LLM, and save returned pytest tests into *tests_dir*.
-    """
     print("[+] Scanning codebase…")
     py_files = list(iter_py_files(repo_root))
 
@@ -40,7 +36,6 @@ def generate_tests(repo_root: Path, tests_dir: Path) -> None:
             raw = llm.generate(prompt)
             cleaned = _clean_llm_output(raw)
 
-            # Validate python syntax early
             try:
                 compile(cleaned, "<generated test>", "exec")
             except SyntaxError as e:
@@ -53,12 +48,7 @@ def generate_tests(repo_root: Path, tests_dir: Path) -> None:
     print(f"[✓] Generated tests saved to: {tests_dir}")
 
 
-# ------------------------------------------------------------------ #
-# helpers
-# ------------------------------------------------------------------ #
-
 def _clean_llm_output(text: str) -> str:
-    """Remove markdown fences or stray whitespace from LLM output."""
     for fence in ("```python", "```py", "```"):
         text = text.replace(fence, "")
     return text.strip() + "\n"

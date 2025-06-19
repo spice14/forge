@@ -1,29 +1,26 @@
-# forge/modules/scan.py
-import os
 import ast
+from pathlib import Path
 
-def scan_codebase(repo_path: str) -> list:
+def get_function_spans(file_path: Path):
     """
-    Scans a Python codebase and collects function definitions.
-
-    Args:
-        repo_path (str): Path to the cloned repo.
-
-    Returns:
-        list of dicts: [{ "file": <path>, "functions": [<func_name>, ...] }]
+    Parse a .py file and return metadata about each top-level function or class method.
     """
+    source = Path(file_path).read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
     results = []
-    for root, _, files in os.walk(repo_path):
-        for file in files:
-            if file.endswith(".py") and "test" not in file.lower():
-                full_path = os.path.join(root, file)
-                with open(full_path, "r", encoding="utf-8") as f:
-                    try:
-                        tree = ast.parse(f.read(), filename=full_path)
-                        functions = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-                        if functions:
-                            results.append({"file": full_path, "functions": functions})
-                    except Exception as e:
-                        print(f"[!] Failed to parse {full_path}: {e}")
+
+    class FuncVisitor(ast.NodeVisitor):
+        def visit_FunctionDef(self, node):
+            start_line = node.lineno
+            end_line = node.end_lineno if hasattr(node, 'end_lineno') else node.lineno
+            name = node.name
+            results.append({
+                "filepath": file_path,
+                "qualified_name": name,
+                "start_line": start_line,
+                "end_line": end_line,
+            })
+
+    FuncVisitor().visit(tree)
     return results
- 
